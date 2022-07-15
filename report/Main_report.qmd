@@ -1,0 +1,41 @@
+---
+title: "E. coli pangenome metabolic capabilities"
+bibliography: references.bib
+csl: nature.csl
+author: "Daniel Martinez-Martinez"
+format: 
+  html:
+    df-print: paged
+    code-fold: true
+    code-tools: true
+editor: visual
+---
+
+## Quarto
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(readr)
+library(cowplot)
+library(here)
+library(ComplexHeatmap)
+library(circlize)
+library(broom)
+library(ggsankey)
+library(vcd)
+library(glue)
+library(openxlsx)
+
+theme_set(theme_cowplot(15))
+```
+
+## Background
+
+We are animals walking in a world of microbes. Since the first moment we set foot on this planet, it had been inhabited by a myriad of other beings that had already mastered the cycles of Earth. Our interdependence with microbes is not only evolutionary but also ecological and functional. They affect our daily life in more ways that we could have ever imagined, in health and disease. But then the opposite is also true. We, the hosts, also affect them and can control their populations at some extent. This endless dance between the two parts is a hard topic to study due to the massive number of elements at a play. To add an extra layer of complexity, microbes are really diverse, and we can find several hundreds of different species in the human gut.
+
+In a recent paper by Almeida *et al.* @Almeida2020, they cataloged a potential number of species that populate our guts, with around 4500 species characterized. More importantly is the fact that these species are divided in more than 200K different genomes, which points to the presence of more than one reference genome per species. This has profound implications in this context as within the same species we can find a huge genetic diversity that must be explored if we want to study microbe-host interactions in a natural context. The genetic diversity found within a species defines what is known by a **pangenome**, which can be described as the collection of different organisms within a single taxonomic level. The concept has been extensively used to describe the genetic diversity of species, describing how diverse it is. In this regard, we can distinguish between two ends of the spectrum: the open pangenomes, where the accessory genome (i.e., the genes that are strain-specific) is very large in comparison with the core genome (i.e., the genes that are shared by almost every strain); and the closed pangenome where the size of the accessory genome is much smaller. Although we can find some examples in-between, this remains a good way of classifying pangenomes.
+
+This framework has been used to study the *E. coli* pangenome and determining that it is an open pangenome @Touchon2020 . This species has been under study for decades and it is still a source of unknown features. The *E. coli* species can be further divided in different phylogenetic groups, named as phylogroups. There are more than 10 phylogroups currently defined for *E. coli*, although usually we can find between 8 or 9 (A, B1, B2, C, D, E, F, G are the most common) @Abram2021. These groups have an evolutionary history that make them related also in their ecology, as for example the B2 group is usually enriched with pathogens. What this also defines is that their genomes and accessory genomes will be similar **within** phylogroups compared to **between** phylogroups.

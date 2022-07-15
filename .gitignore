@@ -38,6 +38,9 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# files from the Quarto documents
+/report/Main_report_files
+
 # personal files and folders
 /raw_data/media
 /raw_data/met_models
