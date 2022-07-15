@@ -1,0 +1,37 @@
+---
+title: "E. coli pangenome metabolic capabilities"
+author: "Daniel Martinez-Martinez"
+format: 
+  html:
+    df-print: paged
+    code-fold: true
+    code-tools: true
+editor: visual
+---
+
+## Quarto
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(readr)
+library(cowplot)
+library(here)
+library(ComplexHeatmap)
+library(circlize)
+library(broom)
+library(ggsankey)
+library(vcd)
+library(glue)
+library(openxlsx)
+
+theme_set(theme_cowplot(15))
+```
+
+## Background
+
+We are animals walking in a world of microbes. Since the first moment we set foot on this planet, it had been inhabited by a myriad of other beings that had already mastered the seas, the lands and even the skies.
+
+In a recent paper by Almeida et al. \\cite{Almeida2020}, they catalogued a potential number of species that populate our guts, with around 4500 species characterised. More importantly is the fact that these species are divided in more than 200K different genomes, which points to the presence of more than one reference genome per species. This has profound implications in this context as within the same species we can find a huge genetic diversity that must be explored if we want to study microbe-host interactions in a natural context. The genetic diversity found within a species defines what is known by a \\emph{pangenome}, which can be described as the collection of different organisms within a single taxonomic level. The concept has been extensively used to describe the genetic diversity of species, describing how diverse it is. In this regard, we can distinguish between two ends of the spectrum: the open pangenomes, where the accessory genome (i.e., the genes that are strain-specific) is very large in comparison with the core genome (i.e., the genes that are shared by almost every strain); and the closed pangenome where the size of the accessory genome is much smaller. Although we can find some examples in-between, this remains a good way of classifying pangenomes.

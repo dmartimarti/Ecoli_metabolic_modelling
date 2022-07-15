@@ -39,7 +39,19 @@ vignettes/*.pdf
 .Renviron
 
 # personal files and folders
-./media
-./met_models
-./R_objects
-./pathways
+/raw_data/media
+/raw_data/met_models
+/raw_data/R_objects
+/raw_data/pathways
+
+
+# results that take too long to upload
+/exploration/chisq_plots/sankey_individuals
+/report/results.pptx
+
+# big files
+/tables/PG_annotation_prokka.csv
+/tables/model_metabolites.csv
+
+# annoying Mac files
+.DS_Store
