@@ -28,6 +28,7 @@ library(ggsankey)
 library(vcd)
 library(glue)
 library(openxlsx)
+library(readxl)
 
 theme_set(theme_cowplot(15))
 ```
@@ -39,3 +40,119 @@ We are animals walking in a world of microbes. Since the first moment we set foo
 In a recent paper by Almeida *et al.* @Almeida2020, they cataloged a potential number of species that populate our guts, with around 4500 species characterized. More importantly is the fact that these species are divided in more than 200K different genomes, which points to the presence of more than one reference genome per species. This has profound implications in this context as within the same species we can find a huge genetic diversity that must be explored if we want to study microbe-host interactions in a natural context. The genetic diversity found within a species defines what is known by a **pangenome**, which can be described as the collection of different organisms within a single taxonomic level. The concept has been extensively used to describe the genetic diversity of species, describing how diverse it is. In this regard, we can distinguish between two ends of the spectrum: the open pangenomes, where the accessory genome (i.e., the genes that are strain-specific) is very large in comparison with the core genome (i.e., the genes that are shared by almost every strain); and the closed pangenome where the size of the accessory genome is much smaller. Although we can find some examples in-between, this remains a good way of classifying pangenomes.
 
 This framework has been used to study the *E. coli* pangenome and determining that it is an open pangenome @Touchon2020 . This species has been under study for decades and it is still a source of unknown features. The *E. coli* species can be further divided in different phylogenetic groups, named as phylogroups. There are more than 10 phylogroups currently defined for *E. coli*, although usually we can find between 8 or 9 (A, B1, B2, C, D, E, F, G are the most common) @Abram2021. These groups have an evolutionary history that make them related also in their ecology, as for example the B2 group is usually enriched with pathogens. What this also defines is that their genomes and accessory genomes will be similar **within** phylogroups compared to **between** phylogroups.
+
+\[To follow with more info\]
+
+## Data exploration
+
+```{r}
+#| cache: true
+#| warning: false
+
+
+# main data for the pathways
+genome_paths = read_excel(here('tables',
+                               'genome_pathways.xlsx'))
+```
+
+```{r}
+#| echo: false
+#| label: data-reading
+#| cache: true
+#| warning: false
+
+# get the genome names
+gnm_names = list.files(path = "./raw_data/pathways", pattern = ".tbl") %>% 
+  str_sub(start = 1, end = -18)
+
+# get the files names
+files_list = list.files(path = "./raw_data/pathways", pattern = ".tbl")
+
+# 
+# # main data for the pathways
+# genome_paths = read_excel(here('tables',
+#                                'genome_pathways.xlsx'))
+
+# metadata from the genomes
+metadata = read_excel("~/Documents/MRC_postdoc/Pangenomic/metadata/MAIN_metadata.xlsx") %>% 
+  mutate(Genome = str_sub(fasta, end = -7), .before = Strainname) %>% 
+  filter(Genome %in% gnm_names) %>% 
+  filter(phylogroup != 'cladeI') %>% 
+  distinct(Genome, .keep_all = TRUE)
+
+# pathways-reactions metadata ###
+
+metacyc_paths = read_delim("../tables/All-reactions-of-MetaCyc_extended.txt", 
+                           delim = "\t", escape_double = FALSE, 
+                           trim_ws = TRUE) %>% 
+  rename(ec_number = `EC-Number`,
+         ID = `Object ID`,
+         reaction = Reaction,
+         substrates = `Substrates`,
+         common_name = `Common-Name`,
+         names = Names,
+         spontaneous = `Spontaneous?`,
+         systematic_name= `Systematic-Name`,
+         pathway = `In-Pathway`)
+
+# ModelSeed comps ###
+
+modelSeed_reactions = read_delim("https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/reactions.tsv", 
+           delim = "\t", escape_double = FALSE, 
+           trim_ws = TRUE)
+
+
+modelSeed_comps = read_delim("https://raw.githubusercontent.com/ModelSEED/ModelSEEDDatabase/master/Biochemistry/compounds.tsv", 
+                                 delim = "\t", escape_double = FALSE, 
+                                 trim_ws = TRUE)
+
+# filter metadata for the bugs we want to analyse: AUS and ECOREF
+meta_filt = metadata %>% 
+  mutate(Genome = str_sub(fasta, start = 1, end = -7), .before = ID) %>% 
+  filter(Discard == 'No') %>% 
+  filter(Origin %in% c('AUS', 'ECOREF')) %>% 
+  distinct(Genome, .keep_all = T) 
+
+
+# collection of reactions from the pangenome
+pan_reactions = genome_paths %>% 
+  arrange(desc(Completeness)) %>% 
+  distinct(ID, .keep_all = T) %>% 
+  separate_rows(ReactionsFound, sep = ' ') %>% 
+  distinct(ReactionsFound) %>% 
+  pull(ReactionsFound)
+
+metacyc_paths_pangenome = metacyc_paths %>% 
+  filter(reaction %in% pan_reactions)  %>% 
+  separate_rows(substrates, 
+                sep = ' // ') %>% 
+  rename(met_name = substrates)
+```
+
+From the metabolic models generated by `gapseq`@Zimmermann2021, we can gather all the info into a big table that has this look:
+
+```{r}
+
+head(genome_paths, 20)
+```
+
+The different columns from the table give us information about the status of each pathway by genome or strain. We can then see the distribution of how many complete pathways do we have per strain, as seen in @fig-comp-paths-histo . By the look of this histogram, seems that we are dealing with a bimodal distribution.
+
+```{r}
+#| label: fig-comp-paths-histo
+#| fig-cap: Histogram of complete pathways per genome in our cohort
+#| fig-width: 5
+#| fig-height: 5
+genome_paths %>% 
+  filter(Completeness == 100) %>% 
+  select(Name, Genome) %>% 
+  group_by(Genome) %>% 
+  count() %>% 
+  filter(n > 400) %>% 
+  ggplot(aes(n)) +
+  geom_histogram(color = 'black', fill = 'darkblue', bins = 30) +
+  labs(
+    x = 'Number of complete pathways in genome',
+    y = 'Number of genomes'
+  )
+```

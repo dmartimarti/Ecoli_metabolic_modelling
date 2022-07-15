@@ -40,6 +40,8 @@ vignettes/*.pdf
 
 # files from the Quarto documents
 /report/Main_report_files
+/report/Main_report_cache
+
 
 # personal files and folders
 /raw_data/media

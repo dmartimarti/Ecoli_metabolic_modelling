@@ -15,6 +15,8 @@ library(ggsankey)
 library(vcd)
 library(glue)
 library(openxlsx)
+library(readxl)
+library(openxlsx)
 
 
 theme_set(theme_cowplot(15))
@@ -50,6 +52,12 @@ genome_paths %>%
 
 genome_paths %>% 
   filter(ID == '|12DICHLORETHDEG-PWY|') %>% View
+
+# save the genome pathways file generated
+genome_paths %>% 
+  write.xlsx(here('tables','genome_pathways.xlsx'))
+  
+
 
 # Metadatas ####
 ## genome metadata  ####
