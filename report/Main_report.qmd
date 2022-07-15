@@ -8,6 +8,10 @@ format:
     df-print: paged
     code-fold: true
     code-tools: true
+  pdf: 
+    echo: false
+    code-fold: true
+    code-tools: true
 editor: visual
 ---
 
