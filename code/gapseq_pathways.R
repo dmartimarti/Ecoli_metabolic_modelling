@@ -26,17 +26,17 @@ theme_set(theme_cowplot(15))
 
 
 # get the genome names
-gnm_names = list.files(path = ".", pattern = ".tbl") %>% 
+gnm_names = list.files(path = "./raw_data/pathways", pattern = ".tbl") %>% 
   str_sub(start = 1, end = -18)
 
 # get the files names
-files_list = list.files(path = ".", pattern = ".tbl")
+files_list = list.files(path = "./raw_data/pathways", pattern = ".tbl")
 
 
 # loop over the files and get them in a huge table
 genome_paths = tibble()
 for (i in 1:length(gnm_names)){
-  temp = read_delim(files_list[i], 
+  temp = read_delim(paste0('./raw_data/pathways/',files_list[i]), 
              delim = "\t", escape_double = FALSE, 
              trim_ws = TRUE, skip = 2) %>% 
     mutate(Genome = gnm_names[i])
@@ -63,7 +63,7 @@ metadata = read_excel("~/Documents/MRC_postdoc/Pangenomic/metadata/MAIN_metadata
 
 ## pathways-reactions metadata ####
 
-metacyc_paths = read_delim("~/Documents/MRC_postdoc/Pangenomic/pangenome_analysis/ALL/phylo_analysis/gapseq/All-reactions-of-MetaCyc_extended.txt", 
+metacyc_paths = read_delim("tables/All-reactions-of-MetaCyc_extended.txt", 
                            delim = "\t", escape_double = FALSE, 
                            trim_ws = TRUE) %>% 
   rename(ec_number = `EC-Number`,
@@ -132,7 +132,7 @@ meta_filt = metadata %>%
 # save the missing genome list in a csv file
 meta_filt %>% 
   filter(!(Genome %in% gnm_names)) %>% 
-  write_csv('../missing_genomes.csv')
+  write_csv('tables/missing_genomes.csv')
   
 
 
@@ -164,7 +164,7 @@ genome_paths %>%
     y = 'Number of genomes'
   )
 
-ggsave("../exploration/number_of_paths.pdf", height = 7, width = 9)
+ggsave("exploration/number_of_paths.pdf", height = 7, width = 9)
 
 
 genome_paths %>% 
@@ -180,7 +180,7 @@ genome_paths %>%
     y = 'Number of genomes',
     caption = 'Pathways not complete (<100% of coverage) are also included in this plot'
   )
-ggsave("../exploration/number_of_paths_all.pdf", height = 7, width = 9)
+ggsave("exploration/number_of_paths_all.pdf", height = 7, width = 9)
 
 ## paths per phylogroup ####
 # distinct paths per phylogroup
@@ -201,7 +201,7 @@ genome_paths %>%
     y = 'Number of genomes'
   )
  
-ggsave("../exploration/number_of_paths_phylogroups.pdf", height = 7, width = 9)
+ggsave("exploration/number_of_paths_phylogroups.pdf", height = 7, width = 9)
 
 genome_paths %>% 
   filter(Completeness == 100) %>% 
@@ -221,7 +221,7 @@ genome_paths %>%
   ) + 
   facet_wrap(~phylogroup, ncol = 1)
 
-ggsave("../exploration/paths_density_phylogroups.pdf", height = 12, width = 6)
+ggsave("exploration/paths_density_phylogroups.pdf", height = 12, width = 6)
 
 # pathways heatmaps ####
 ## complete paths matrix ####
@@ -248,7 +248,7 @@ Heatmap(paths_matrix,
         name = "Completeness")
 
 
-quartz.save(file = '../exploration/Pathways_heatmap.pdf',
+quartz.save(file = 'exploration/Pathways_heatmap.pdf',
             type = 'pdf', height = 70, width = 90)
 
 
@@ -258,7 +258,7 @@ Heatmap(paths_matrix,
         show_row_names = FALSE,
         show_column_names = FALSE)
 
-quartz.save(file = '../exploration/Pathways_heatmap_noNames.pdf',
+quartz.save(file = 'exploration/Pathways_heatmap_noNames.pdf',
             type = 'pdf', height = 9, width = 12)
 
 
@@ -295,7 +295,7 @@ Heatmap(redux_matrix,
         col = col_fun,
         name = "Completeness")
 
-quartz.save(file = '../exploration/Pathways_heatmap_differential.pdf',
+quartz.save(file = 'exploration/Pathways_heatmap_differential.pdf',
             type = 'pdf', height = 50, width = 70)
 
 Heatmap(redux_matrix, 
@@ -304,7 +304,7 @@ Heatmap(redux_matrix,
         show_row_names = FALSE,
         show_column_names = FALSE)
 
-quartz.save(file = '../exploration/Pathways_heatmap_differential_noNames.pdf',
+quartz.save(file = 'exploration/Pathways_heatmap_differential_noNames.pdf',
             type = 'pdf', height = 6, width = 9)
 
 
@@ -331,7 +331,7 @@ Heatmap(paths_matrix,
         col = col_fun,
         name = "Completeness")
 
-quartz.save(file = '../exploration/ALL_Pathways_heatmap.pdf',
+quartz.save(file = 'exploration/ALL_Pathways_heatmap.pdf',
             type = 'pdf', height = 70, width = 190)
 
 Heatmap(paths_matrix, 
@@ -340,7 +340,7 @@ Heatmap(paths_matrix,
         show_row_names = FALSE,
         show_column_names = FALSE)
 
-quartz.save(file = '../exploration/ALL_Pathways_heatmap_noNames.pdf',
+quartz.save(file = 'exploration/ALL_Pathways_heatmap_noNames.pdf',
             type = 'pdf', height = 9, width = 12)
 
 
@@ -351,7 +351,7 @@ quartz.save(file = '../exploration/ALL_Pathways_heatmap_noNames.pdf',
 # metabolites -------------------------------------------------------
 
 # read metabolites extracted from the R objects (see the other script)
-metab = read_csv("~/Documents/MRC_postdoc/Pangenomic/pangenome_analysis/ALL/phylo_analysis/gapseq/model_metabolites.csv")
+metab = read_csv("tables/model_metabolites.csv")
 
 
 gnm_valid = meta_filt %>% pull(Genome)
@@ -374,7 +374,7 @@ metab %>%
     y = 'Count'
   )
 
-ggsave("../exploration/molecules_histogram.pdf", height = 7, width = 9)
+ggsave("exploration/molecules_histogram.pdf", height = 7, width = 9)
   
 
 
@@ -402,7 +402,9 @@ metab %>%
   count(met_name) %>% 
   arrange(n) %>% 
   # filter(n < ((736 * 0.1))) %>% 
-  write_csv('../exploration/tables/metabs_periplasm.csv')
+  write_csv(here('tables', 
+                 'metabolites_compartments',
+                 'metabs_periplasm.csv'))
 
 metacyc_paths_pangenome
 
@@ -431,7 +433,7 @@ Heatmap(mets_matrix,
         name = "Presence")
 
 
-quartz.save(file = '../exploration/Metabs_periplasm_heatmap.pdf',
+quartz.save(file = 'exploration/Metabs_periplasm_heatmap.pdf',
             type = 'pdf', height = 80, width = 9)
 
 
@@ -456,7 +458,9 @@ metab %>%
   group_by(met_id) %>% 
   count(met_name) %>% 
   arrange(n) %>% 
-  write_csv('../exploration/tables/metabs_ext.csv')
+  write_csv(here('tables', 
+                 'metabolites_compartments',
+                 'metabs_ext.csv'))
 
 metab %>% 
   filter(model %in% gnm_valid) %>% 
@@ -466,7 +470,9 @@ metab %>%
   count(met_name) %>% 
   arrange(n) %>% 
   full_join(metacyc_paths_pangenome) %>% 
-  write_csv('../exploration/tables/metabs_ext_descriptions.csv')
+  write_csv(here('tables', 
+                 'metabolites_compartments',
+                 'metabs_ext_descriptions.csv'))
 
 
 
@@ -511,7 +517,7 @@ Heatmap(metab_ext_matrix,
 
 
 
-quartz.save(file = '../exploration/Metabs_ext_heatmap.pdf',
+quartz.save(file = 'exploration/Metabs_ext_heatmap.pdf',
             type = 'pdf', height = 80, width = 30)
 
 
@@ -522,7 +528,7 @@ Heatmap(redux_matrix,
         show_row_names = F)
 
 
-quartz.save(file = '../exploration/Metabs_ext_redux_nonames_heatmap.pdf',
+quartz.save(file = 'exploration/Metabs_ext_redux_nonames_heatmap.pdf',
             type = 'pdf', height = 7, width = 8)
 
 
@@ -545,7 +551,9 @@ metab %>%
   count(met_name) %>% 
   ungroup %>% 
   arrange(n) %>% 
-  write_csv('../exploration/tables/metabs_cyt.csv')
+  write_csv(here('tables', 
+                 'metabolites_compartments',
+                 'metabs_cyt.csv'))
 
 
 metab %>% 
@@ -557,7 +565,9 @@ metab %>%
   arrange(n) %>% 
   full_join(metacyc_paths_pangenome) %>% 
   # filter(n < ((736 * 0.1))) %>% 
-  write_csv('../exploration/tables/metabs_cyt_description.csv')
+  write_csv(here('tables', 
+                 'metabolites_compartments',
+                 'metabs_cyt_description.csv'))
 
   
 
@@ -599,7 +609,7 @@ Heatmap(redux_matrix,
         name = "Presence")
 
 
-quartz.save(file = '../exploration/Metabs_cytop_heatmap.pdf',
+quartz.save(file = 'exploration/Metabs_cytop_heatmap.pdf',
             type = 'pdf', height = 80, width = 100)
 
 
@@ -640,7 +650,7 @@ pca_fit %>%
   stat_ellipse(level=0.95, geom = 'polygon', alpha = 0.3) +
   background_grid()
 
-ggsave("../exploration/PCA_ext_mets_PC1_PC3.pdf", height = 7, width = 9)
+ggsave("exploration/PCA_ext_mets_PC1_PC3.pdf", height = 7, width = 9)
 
 
 ## cyto metabolites ####
@@ -675,7 +685,7 @@ pca_fit %>%
   stat_ellipse(level=0.95, geom = 'polygon', alpha = 0.3) +
   background_grid()
 
-ggsave("../exploration/PCA_cyto_mets.pdf", height = 7, width = 9)
+ggsave("exploration/PCA_cyto_mets.pdf", height = 7, width = 9)
 
 
 
@@ -730,7 +740,7 @@ assoc(test_dt, shade = TRUE, las=1,
         offset_varnames = c(left = 0),
         rot_labels = c(left = 0)))
 
-quartz.save(file = '../exploration/chisq_plots/assoc_test.pdf',
+quartz.save(file = 'exploration/chisq_plots/assoc_test.pdf',
             type = 'pdf', height = 10, width = 7)
 
 
@@ -760,7 +770,7 @@ mosaicplot(t(head(dt,20)), shade = TRUE, las=2,
            cex.axis = 01,
            main = "sdlfakjsd")
 
-quartz.save(file = '../exploration/chisq_plots/mosaicplot_diff_paths.pdf',
+quartz.save(file = 'exploration/chisq_plots/mosaicplot_diff_paths.pdf',
             type = 'pdf', height = 18, width = 16)
 
 
@@ -772,7 +782,7 @@ assoc(dt, shade = TRUE,
         offset_varnames = c(left = 0),
         rot_labels = c(left = 0)))
 
-quartz.save(file = '../exploration/chisq_plots/assoc_all.pdf',
+quartz.save(file = 'exploration/chisq_plots/assoc_all.pdf',
             type = 'pdf', height = 120, width = 12)
 
 ## chi sq test ####
@@ -791,7 +801,7 @@ corrplot::corrplot(residuals[rowSums(abs(residuals)) >15,],
                    is.cor = FALSE,
                    tl.cex = 0.3)
 
-quartz.save(file = '../exploration/chisq_plots/residuals_15.pdf',
+quartz.save(file = 'exploration/chisq_plots/residuals_15.pdf',
             type = 'pdf', height = 10, width = 5)
 
 # contribution 
@@ -849,7 +859,7 @@ ggplot(aes(x = x,
   scale_fill_viridis_d(option = "inferno")+
   labs(fill = 'Nodes')
 
-quartz.save(file = '../exploration/chisq_plots/sankey_test.pdf',
+quartz.save(file = 'exploration/chisq_plots/sankey_test.pdf',
             type = 'pdf', height = 6, width = 7)
 
 # highlight nodes
@@ -880,7 +890,7 @@ ggplot(df, aes(x = x
   labs(fill = 'Nodes')
 
 
-quartz.save(file = '../exploration/chisq_plots/sankey_test_highlight.pdf',
+quartz.save(file = 'exploration/chisq_plots/sankey_test_highlight.pdf',
             type = 'pdf', height = 6, width = 7)
 
 
@@ -915,7 +925,7 @@ plotSankey = function(db, pathway, save.plot = TRUE){
     labs(fill = 'Nodes')
   if (save.plot == TRUE){
     # save the plot with the glue function
-    ggsave(file = glue('../exploration/chisq_plots/sankey_individuals/sankey_{pathway}.pdf'),
+    ggsave(file = glue('exploration/chisq_plots/sankey_individuals/sankey_{pathway}.pdf'),
            height = 6, width = 7)
   } 
   return(p)
@@ -964,7 +974,7 @@ genome_paths %>%
                names_to = 'Pathway', values_to = 'Presence') %>% 
   mutate(`Is different?` = case_when(Pathway %in% diff_pathways ~ 'Yes',
                                      TRUE ~ 'No')) %>% 
-  write.xlsx('../exploration/tables/pathway_PA_metadata.xlsx')
+  write.xlsx('tables/pathway_PA_metadata.xlsx')
 
 
 
@@ -991,7 +1001,7 @@ assoc(test_dt, shade = TRUE, las=1,
         offset_varnames = c(left = 0),
         rot_labels = c(left = 0)))
 
-quartz.save(file = '../exploration/chisq_plots/glyphosate_deg_assoc_test.pdf',
+quartz.save(file = 'exploration/chisq_plots/glyphosate_deg_assoc_test.pdf',
             type = 'pdf', height = 10, width = 7)
 
 
@@ -1027,7 +1037,7 @@ genome_paths %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 
-quartz.save(file = '../exploration/glyphosate_deg_completeness.pdf',
+quartz.save(file = 'exploration/glyphosate_deg_completeness.pdf',
             type = 'pdf', height = 6, width = 4)
 
 
@@ -1052,7 +1062,7 @@ genome_paths %>%
   theme_cowplot(15) +
   theme(plot.title = element_text(hjust = 0.5))
 
-quartz.save(file = '../exploration/glyphosate_deg_completeness_phenotype.pdf',
+quartz.save(file = 'exploration/glyphosate_deg_completeness_phenotype.pdf',
             type = 'pdf', height = 6, width = 9)
 
 genome_paths %>% 
@@ -1065,7 +1075,7 @@ genome_paths %>%
   drop_na(Broadphenotype) %>% 
   filter(Broadphenotype == 'Laboratory strain') %>% 
   select(Name, Prediction, Completeness, Genome, Strainname, Broadphenotype, phylogroup) %>% 
-  write_csv('../exploration/glyphosate_lab_strains.csv')
+  write_csv('tables/glyphosate_lab_strains.csv')
 
 
 
@@ -1077,7 +1087,7 @@ genome_paths %>%
 # /Users/danmarti/Documents/MRC_postdoc/My_projects/pangenome_functions
 
 
-PG_annotation_prokka = read_csv("~/Documents/MRC_postdoc/Pangenomic/pangenome_analysis/ALL/phylo_analysis/gapseq/PG_annotation_prokka.csv")
+PG_annotation_prokka = read_csv("tables/PG_annotation_prokka.csv")
 
 
 unique(PG_annotation_prokka$genome)
@@ -1104,7 +1114,7 @@ gff_count %>%
         legend.justification = "center") +
   guides(fill = guide_legend(title='Category'))
 
-ggsave(here('../exploration', 'PG_annotation', 'annotated_genes_histogram.pdf'),
+ggsave(here('exploration', 'PG_annotation', 'annotated_genes_histogram.pdf'),
        height = 7, width = 9)
 
 
@@ -1124,7 +1134,7 @@ gff_count %>%
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 
-ggsave(here('../exploration', 'PG_annotation', 'annotated_genes_barplot.pdf'),
+ggsave(here('exploration', 'PG_annotation', 'annotated_genes_barplot.pdf'),
        height = 7, width = 9)
 
 
@@ -1143,35 +1153,8 @@ PG_annotation_prokka %>%
   ) +
   theme_cowplot(14)
 
-ggsave(here('../exploration', 'PG_annotation', 'annotated_genes_barplot.pdf'),
+ggsave(here('exploration', 'PG_annotation', 'annotated_genes_barplot.pdf'),
        height = 7, width = 9)
-
-# gff_db %>% 
-#   dplyr::select(-value) %>% 
-#   mutate(genome = str_sub(genome, end = -5)) %>% 
-#   drop_na(gene) %>% 
-#   filter(product != 'hypothetical protein') %>% 
-#   separate(gene, into = c('gene', 'trash'), sep = '_') %>% 
-#   count(gene, sort = TRUE) %>% 
-#   ggplot(aes(x = n)) +
-#   geom_bar(position = 'identity', width = 1) +
-#   labs(
-#     x = 'Genome count',
-#     y = 'Gene count'
-#   ) +
-#   theme_cowplot(14)
-# 
-# 
-# 
-# cosa = gff_db %>% 
-#   dplyr::select(-value) %>% 
-#   mutate(genome = str_sub(genome, end = -5)) %>% 
-#   drop_na(gene) %>% 
-#   filter(product != 'hypothetical protein') %>% 
-#   separate(gene, into = c('gene', 'trash'), sep = '_') %>% 
-#   count(gene, sort = TRUE) 
-
-
 
 
 

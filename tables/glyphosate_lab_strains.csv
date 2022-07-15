@@ -1,0 +1,17 @@
+Name,Prediction,Completeness,Genome,Strainname,Broadphenotype,phylogroup
+glyphosate degradation III,TRUE,100,NT12001_189,MG1655,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12002_188,MC4100,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12003_214,W3110,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12004_22,BW25113,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12005_17,BL21(DE3),Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12006_215,DH5a,Laboratory strain,A
+glyphosate degradation III,FALSE,57,NT12009_154,OP50,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12013_22,BW38029,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12014_22,CAG60056,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12093_170,S17,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12094_30,DH1,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12095_187,DH1(E381),Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12196_324,O157deltastx,Laboratory strain,E
+glyphosate degradation III,TRUE,100,NT12343_357,DH300,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12704_20,606,Laboratory strain,A
+glyphosate degradation III,TRUE,100,NT12705_21,607,Laboratory strain,A
