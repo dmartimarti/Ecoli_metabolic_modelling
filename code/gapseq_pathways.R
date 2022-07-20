@@ -976,13 +976,34 @@ genome_paths %>%
   mutate(presence = 1) %>% 
   pivot_wider(names_from = Name, values_from = presence, values_fill = 0) %>% 
   left_join(metadata %>% 
-              select(Genome, phylogroup, Well, PG)) %>% 
+              select(Genome, Strainname,
+                     phylogroup,Broadphenotype, Well, PG)) %>% 
   select(Genome, phylogroup:PG, everything()) %>% 
   pivot_longer(cols = `folate transformations III (E. coli)`:`L-arabinose degradation II`,
                names_to = 'Pathway', values_to = 'Presence') %>% 
   mutate(`Is different?` = case_when(Pathway %in% diff_pathways ~ 'Yes',
                                      TRUE ~ 'No')) %>% 
   write.xlsx('tables/pathway_PA_metadata.xlsx')
+
+
+
+
+# save a file with every pathway found in the datasets
+
+
+
+genome_paths %>% 
+  # filter(Completeness == 100) %>% 
+  # select(Name, Genome) %>% 
+  mutate(presence = Completeness / 100,.before='Completeness') %>% 
+  arrange(desc(presence)) %>% 
+  filter(presence > 0) %>% 
+  distinct(ID, Name, .keep_all = TRUE) %>% 
+  select(-Genome) %>% 
+  mutate(ID = str_remove_all(ID, '\\|')) %>% 
+  mutate(metacyc_link = paste0('https://metacyc.org/META/NEW-IMAGE?type=PATHWAY&object=',ID)
+         , .before='VagueReactions') %>%
+  write.xlsx("tables/unique_pathways.xlsx")
 
 
 

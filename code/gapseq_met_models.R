@@ -45,7 +45,7 @@ getMetaboliteProduction <- function(mod) {
 library(readxl)
 metadata = read_excel("~/Documents/MRC_postdoc/Pangenomic/metadata/MAIN_metadata.xlsx")
 
-modelSeed_compounds <- read_delim("~/Documents/MRC_postdoc/Pangenomic/pangenome_analysis/ALL/phylo_analysis/gapseq/modelSeed_compounds.tsv", 
+modelSeed_compounds <- read_delim("tables/modelSeed_compounds.tsv", 
                                   delim = "\t", escape_double = FALSE, 
                                   trim_ws = TRUE)
 
