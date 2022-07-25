@@ -15,8 +15,6 @@ format:
 editor: visual
 ---
 
-## Quarto
-
 ```{r}
 #| label: load-packages
 #| include: false
