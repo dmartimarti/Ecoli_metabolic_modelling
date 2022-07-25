@@ -60,3 +60,4 @@ vignettes/*.pdf
 
 # annoying Mac files
 .DS_Store
+tables/~$unique_pathways.xlsx
