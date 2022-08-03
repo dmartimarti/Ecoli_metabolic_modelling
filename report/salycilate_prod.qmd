@@ -1,0 +1,38 @@
+---
+title: "Salicylate metabolism"
+author: "Daniel Martinez Martinez"
+format: 
+  html:
+    df-print: paged
+    code-fold: true
+    code-tools: true
+editor: visual
+---
+
+## Salicylate production and degradation
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+
+genome_paths %>%
+  filter(Completeness > 0) %>%
+  filter(str_detect(Name, 'salicylate')) %>%
+  left_join(metadata, by = c('Genome')) %>% 
+  mutate(complete = case_when(Completeness == 100 ~ 'Complete',
+                              Completeness < 100 ~ 'partial'),
+         .before = VagueReactions) %>%
+  group_by(Name) %>% 
+  count(complete) %>% 
+  ggplot(aes(x = complete, y = n, fill =  complete)) +
+  geom_histogram(stat= 'identity', show.legend = F, color = 'black') +
+  scale_fill_manual(values = c('#339EF5', '#FFDC29')) +
+  labs(x = 'Pathway completeness',
+       y = 'Count') +
+  theme_cowplot(15) +
+  facet_wrap(~Name) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```

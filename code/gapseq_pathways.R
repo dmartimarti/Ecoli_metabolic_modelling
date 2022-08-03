@@ -1189,3 +1189,98 @@ ggsave(here('exploration', 'PG_annotation', 'annotated_genes_barplot.pdf'),
 
 
 
+# salycilate --------------------------------------------------------------
+
+
+
+# presence of the pathways in the pangenome
+
+genome_paths %>%
+  filter(Name %in% c('chlorosalicylate degradation',
+           'methylsalicylate degradation',
+           'salicylate biosynthesis I',
+           'salicylate degradation IV')) %>% 
+  filter(ID != '|PWY-6184|') %>% 
+  left_join(metadata, by = c('Genome')) %>% 
+  mutate(complete = case_when(Completeness == 100 ~ 'Complete',
+                              Completeness < 100 & Completeness > 0 ~ 'Partial',
+                              Completeness == 0 ~ 'Absent'),
+         .before = VagueReactions) %>%
+  mutate(complete = factor(complete, levels = c('Complete','Partial','Absent')),
+         Name = factor(Name, levels = c(
+           'salicylate biosynthesis I',
+           'methylsalicylate degradation',
+           'salicylate degradation IV',
+           'chlorosalicylate degradation'))) %>% 
+  group_by(Name) %>% 
+  count(complete) %>% 
+  mutate(n = n/length(unique(genome_paths$Genome)) * 100) %>% 
+  ggplot(aes(x = complete, y = n, fill =  complete)) +
+  geom_histogram(stat= 'identity', show.legend = F, color = 'black') +
+  # scale_fill_manual(values = c('#339EF5', '#FFDC29')) +
+  labs(x = 'Pathway completeness',
+       y = 'Percentage of strains') +
+  theme_cowplot(15) +
+  facet_wrap(~Name) 
+
+ggsave(here('exploration','salicylate_presence_paths.pdf'),
+       width = 7, height = 8)
+
+
+
+
+
+# presence salicylate biosynthesis I by phylogroup
+
+genome_paths %>%
+  filter(Name %in% c('salicylate biosynthesis I')) %>% 
+  filter(ID != '|PWY-6184|') %>% 
+  left_join(metadata, by = c('Genome')) %>% 
+  mutate(complete = case_when(Completeness == 100 ~ 'Complete',
+                              Completeness < 100 & Completeness > 0 ~ 'Partial',
+                              Completeness == 0 ~ 'Absent'),
+         .before = VagueReactions) %>%
+  mutate(complete = factor(complete, levels = c('Complete','Partial','Absent'))) %>% 
+  filter(phylogroup != 'E or cladeI') %>% 
+  group_by(Name) %>% 
+  # count(complete) %>% 
+  # mutate(n = n/length(unique(genome_paths$Genome)) * 100) %>% 
+  ggplot(aes(x = phylogroup, fill =  complete)) +
+  geom_bar(position = 'fill') +
+  labs(x = 'Pathway completeness',
+       y = 'Percentage of strains') +
+  theme_cowplot(15) +
+  facet_wrap(~Name) 
+
+ggsave(here('exploration','salicylate_biosynthesis_phylogroup.pdf'),
+         width = 6, height = 6)
+
+
+# salicylate biosynthesis I and yersiniabactin biosynthesis
+
+genome_paths %>%
+  filter(Name %in% c('salicylate biosynthesis I',
+                     'yersiniabactin biosynthesis')) %>% 
+  filter(ID != '|PWY-6184|') %>% 
+  left_join(metadata, by = c('Genome')) %>% 
+  mutate(complete = case_when(Completeness == 100 ~ 'Complete',
+                              Completeness < 100 & Completeness > 0 ~ 'Partial',
+                              Completeness == 0 ~ 'Absent'),
+         .before = VagueReactions) %>%
+  mutate(complete = factor(complete, levels = c('Complete','Partial','Absent'))) %>% 
+  filter(phylogroup != 'E or cladeI') %>% 
+  group_by(Name) %>% 
+  # count(complete) %>% 
+  # mutate(n = n/length(unique(genome_paths$Genome)) * 100) %>% 
+  ggplot(aes(x = phylogroup, fill =  complete)) +
+  geom_bar() +
+  labs(x = 'Pathway completeness',
+       y = 'Percentage of strains') +
+  theme_cowplot(15) +
+  facet_wrap(~Name) 
+
+genome_paths %>%
+  filter(str_detect(ReactionsFound, 'RXN-11113')) %>% view
+
+
+

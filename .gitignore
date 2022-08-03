@@ -50,6 +50,9 @@ vignettes/*.pdf
 /raw_data/pathways
 
 
+# MicrobeFDT files and folders
+/MicrobeFDT/neo4j-community-4.4.9
+
 # results that take too long to upload
 /exploration/chisq_plots/sankey_individuals
 /report/results.pptx
