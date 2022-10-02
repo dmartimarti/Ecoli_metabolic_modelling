@@ -19,6 +19,7 @@ library(readxl)
 library(openxlsx)
 
 
+
 theme_set(theme_cowplot(15))
 
 
@@ -246,6 +247,8 @@ paths_matrix = paths_pa %>%
   select(-Genome) %>% 
   as.matrix() 
   
+paths_matrix_pca = paths_matrix
+
 rownames(paths_matrix) = gnm_names
 
 
@@ -698,6 +701,37 @@ ggsave("exploration/PCA_cyto_mets.pdf", height = 7, width = 9)
 
 
 
+# PCA paths ---------------------------------------------------------------
+
+
+pca_fit = paths_matrix_pca %>% 
+  as.data.frame() %>% 
+  select(where(is.numeric)) %>% 
+  prcomp(scale = F)
+
+pca_fit %>%
+  augment(redux_matrix) %>% # add original dataset back in
+  rename(Genome = `.rownames`) %>% 
+  select(Genome,`.fittedPC1`:`.fittedPC5`) %>% 
+  left_join(meta_filt) %>% 
+  filter(!(phylogroup %in% c('E or cladeI', 'cladeI'))) %>% 
+  # filter(phylogroup != 'B2') %>% 
+  ggplot(aes(.fittedPC1, .fittedPC2, 
+             color = phylogroup, fill = phylogroup)) + 
+  geom_point(size = 1.5) +
+  # ylim(-2,2) +
+  theme_half_open(12) + 
+  labs(
+    x = 'PC1',
+    y = 'PC2',
+    caption = ''
+  ) +
+  stat_ellipse(level=0.95, geom = 'polygon', alpha = 0.3) +
+  background_grid()
+
+ggsave("exploration/PCA_paths_complete.pdf", height = 7, width = 9)
+
+
 
 
 
@@ -952,6 +986,8 @@ plotSankey(db_sankey, 'D-erythronate degradation I')
 
 # remove a problematic name
 diff_paths_sankey = diff_pathways[diff_pathways != "coenzyme B/coenzyme M regeneration I (methanophenazine-dependent)"]
+
+diff_paths_sankey = c(diff_paths_sankey, 'ATP biosynthesis')
 
 
 for (path in diff_paths_sankey){
