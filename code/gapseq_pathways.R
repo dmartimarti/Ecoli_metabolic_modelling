@@ -11,6 +11,7 @@ library(ComplexHeatmap)
 library(circlize)
 library(broom)
 library(ggsankey)
+library(ggrepel)
 # install.packages("vcd")
 library(vcd)
 library(glue)
@@ -731,9 +732,155 @@ pca_fit %>%
 
 ggsave("exploration/PCA_paths_complete.pdf", height = 7, width = 9)
 
+## rotation #### 
+
+# extract rotation matrix
+pca_fit %>%
+  tidy(matrix = "rotation") %>% 
+  filter(PC %in% c(1,2,3))
+
+
+paths_dist = pca_fit %>%
+  tidy(matrix = "rotation") %>% 
+  filter(PC %in% c(1,2)) %>% 
+  group_by(column) %>% 
+  summarise(dist = sqrt(sum(value**2))) %>% 
+  arrange(desc(dist)) %>% 
+  head(40) %>% 
+  pull(column)
+
+
+# get the pathways that have > 0.1 on PC1 (positive), they enrich the cluster
+# of the phylogroup B2
+
+b2_paths = pca_fit %>%
+  tidy(matrix = "rotation") %>% 
+  filter(PC %in% c(1)) %>% 
+  filter(value > 0.08) %>% 
+  arrange(column)
+b2_paths %>% 
+  write_csv('exploration/PCA_rotations/paths_B2_enriched.csv')
+
+
+nonB2_paths = pca_fit %>%
+  tidy(matrix = "rotation") %>% 
+  filter(PC %in% c(1)) %>% 
+  filter(value < -0.08) %>% 
+  arrange(column) 
+nonB2_paths%>% 
+  write_csv('exploration/PCA_rotations/paths_AB1CDEF_enriched.csv')
 
 
 
+arrow_style <- arrow(
+  angle = 20, ends = "first", type = "closed", length = grid::unit(8, "pt")
+)
+
+# plot rotation matrix
+pca_fit %>%
+  tidy(matrix = "rotation") %>%
+  filter(PC %in% c(1,2)) %>% 
+  filter(column %in% nonB2_paths$column | column %in% b2_paths$column ) %>% 
+  mutate(Phylo_group = case_when(column %in% b2_paths$column ~ 'B2',
+                           column %in% nonB2_paths$column ~ 'non-B2')) %>% 
+  mutate(column = str_wrap(column, width = 30)) %>% 
+  pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") %>%
+  ggplot(aes(PC1, PC2)) +
+  geom_segment(xend = 0, yend = 0, arrow = arrow_style) +
+  # geom_text(
+  #   aes(label = column),
+  #   hjust = 1, nudge_x = -0.02, 
+  #   color = "#904C2F"
+  # ) +
+  geom_label_repel(
+    aes(label = column,fill = Phylo_group), nudge_x = -0.02,
+    max.overlaps= 20, box.padding = 0.1,
+    
+  ) +
+  # xlim(-.25, .4) + ylim(-.25, 0.25) +
+  # coord_fixed() + # fix aspect ratio to 1:1
+  theme_minimal_grid(12)
+
+ggsave('exploration/PCA_rotations/selected_rotations.pdf',
+       height = 10, width = 13)
+
+
+
+## proportion of proteins in dataset -----
+
+
+paths_proportions = genome_paths %>% 
+  filter(Completeness == 100) %>% 
+  left_join(metadata %>% 
+              select(Genome, phylogroup)) %>%
+  drop_na(phylogroup) %>% 
+  mutate(phylogroup = case_when(phylogroup == 'E or cladeI' ~ 'E',
+                                TRUE ~ phylogroup)) %>% 
+  select(ID, Name, ReactionsFound, Genome, phylogroup)
+
+
+
+paths_proportions %>% distinct(phylogroup)
+
+paths_proportions = paths_proportions %>% 
+  mutate(big_group = case_when(phylogroup == 'B2' ~ 'B2',
+                           phylogroup %in% c('A','C','B1') ~ 'AB1C',
+                           TRUE ~ 'DEFG')) %>% 
+  group_by(Name, big_group) %>% 
+  count() %>% 
+  group_by(big_group) %>% 
+  mutate(max_n = max(n),
+         prop = n / max_n)
+
+
+# plot the different protein groups
+paths_proportions %>% 
+  ungroup %>% 
+  mutate(Name = str_wrap(Name, width = 50)) %>% 
+  filter(Name %in% nonB2_paths$column) %>% 
+  # expands the dataframe with the other groups
+  full_join(expand(. ,Name, big_group)) %>% 
+  # add 0s to the newly added groups
+  replace_na(list(prop = 0)) %>% 
+  ggplot(aes(x = prop, 
+             y = fct_reorder(Name, prop), 
+             fill = big_group)) +
+  geom_bar(stat = 'identity', position=position_dodge()) +
+  theme_cowplot(15) +
+  labs(
+    x = NULL,
+    y = 'Proportion',
+    fill = 'Group'
+  ) 
+
+ggsave('exploration/PCA_rotations/path_proportions_nonB2.pdf',
+       height = 10, width = 8)
+
+
+
+# plot the different protein groups
+paths_proportions %>% 
+  ungroup %>% 
+  mutate(Name = str_wrap(Name, width = 50)) %>% 
+  filter(Name %in% 'L-threonate degradation') %>% 
+  # expands the dataframe with the other groups
+  full_join(expand(. ,Name, big_group)) %>% 
+  # add 0s to the newly added groups
+  replace_na(list(prop = 0)) %>% 
+  ggplot(aes(x = prop, 
+             y = fct_reorder(Name, prop), 
+             fill = big_group)) +
+  geom_bar(stat = 'identity', position=position_dodge()) +
+  theme_cowplot(15) +
+  labs(
+    x = NULL,
+    y = 'Proportion',
+    fill = 'Group'
+  ) 
+
+ggsave('exploration/PCA_rotations/path_proportions_B2.pdf',
+       height = 6, width = 8)
+  
 
 # Chi-square test ---------------------------------------------------------
 
@@ -1001,6 +1148,10 @@ plotSankey(db_sankey, 'L-arabinose degradation II', save.plot = F)
 db_pathway = db_sankey %>% 
   filter(Name == 'curcumin degradation') %>% 
   make_long(Name, phylogroup)
+
+
+
+
 
 
 
