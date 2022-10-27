@@ -882,6 +882,112 @@ ggsave('exploration/PCA_rotations/path_proportions_B2.pdf',
        height = 6, width = 8)
   
 
+
+# pathway proportion plots ------------------------------------------------
+
+
+total_prop = paths_proportions %>% 
+  ungroup %>% 
+  mutate(Name = str_wrap(Name, width = 50)) %>% 
+  select(Name, big_group, prop) %>% 
+  pivot_wider(names_from = big_group, values_from = prop) %>% 
+  replace_na(list(AB1C = 0, B2 = 0, DEFG = 0)) 
+
+
+dir.create('exploration/path_proportions')
+
+
+path_plot = function(db) {
+
+  db %>% 
+    ggplot(aes(x = prop, 
+               y = fct_reorder(Name, prop), 
+               fill = big_group)) +
+    geom_bar(stat = 'identity', position=position_dodge()) +
+    theme_cowplot(15) +
+    labs(
+      x = NULL,
+      y = 'Proportion',
+      fill = 'Group')
+}
+
+
+# B2 exclusive
+total_prop %>% 
+  filter(AB1C < 0.4, B2 > 0.4, DEFG < 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot
+
+ggsave('exploration/path_proportions/B2_exclusive.pdf',
+       height = 5, width = 8)
+
+# - - - - - - - - - - - - - - 
+ 
+# AB1C exclusive
+total_prop %>% 
+  filter(AB1C > 0.4, B2 < 0.4, DEFG < 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot
+
+ggsave('exploration/path_proportions/AB1C_exclusive.pdf',
+       height = 5, width = 8)
+
+
+# - - - - - - - - - - - - - - 
+
+  
+# DEFG  exclusive 
+total_prop %>% 
+  filter(AB1C < 0.4, B2 < 0.4, DEFG > 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot
+
+ggsave('exploration/path_proportions/DEFG_exclusive.pdf',
+       height = 5, width = 8)
+ 
+# - - - - - - - - - - - - - - 
+
+
+# ABC and DEFG but not in B2
+total_prop %>% 
+  filter(AB1C > 0.4, B2 < 0.4, DEFG > 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot
+
+ggsave('exploration/path_proportions/ABC_DEFG_paths.pdf',
+       height = 11, width = 8) 
+
+
+# - - - - - - - - - - - - - - 
+
+#  B2 and ABC, but not in DEFG
+total_prop %>% 
+  filter(AB1C > 0.4, B2 > 0.4, DEFG < 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot 
+
+ggsave('exploration/path_proportions/ABC_B2_paths.pdf',
+       height = 7, width = 8) 
+
+
+# - - - - - - - - - - - - - - 
+
+# B2 and EDFG but not in ABC
+total_prop %>% 
+  filter(AB1C < 0.4, B2 > 0.4, DEFG > 0.4) %>% 
+  pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
+  path_plot 
+
+ggsave('exploration/path_proportions/B2_DEFG_paths.pdf',
+       height = 7, width = 8) 
+
+
+
+
+
+
+
+
 # Chi-square test ---------------------------------------------------------
 
 # prepare the matrix
