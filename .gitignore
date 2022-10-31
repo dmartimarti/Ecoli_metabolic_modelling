@@ -65,3 +65,4 @@ vignettes/*.pdf
 .DS_Store
 tables/~$unique_pathways.xlsx
 tables/pathway_PA_metadata.xlsx
+.RDataTmp
