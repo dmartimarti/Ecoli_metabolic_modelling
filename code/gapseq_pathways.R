@@ -898,7 +898,6 @@ dir.create('exploration/path_proportions')
 
 
 path_plot = function(db) {
-
   db %>% 
     ggplot(aes(x = prop, 
                y = fct_reorder(Name, prop), 
@@ -913,8 +912,18 @@ path_plot = function(db) {
 
 
 # B2 exclusive
-total_prop %>% 
-  filter(AB1C < 0.4, B2 > 0.4, DEFG < 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C < 0.4, B2 > 0.4, DEFG < 0.4) 
+
+# initiate data frame for pathways
+paths_df = tibble()
+
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'B2_exclusive'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
   path_plot
 
@@ -924,8 +933,16 @@ ggsave('exploration/path_proportions/B2_exclusive.pdf',
 # - - - - - - - - - - - - - - 
  
 # AB1C exclusive
-total_prop %>% 
-  filter(AB1C > 0.4, B2 < 0.4, DEFG < 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C > 0.4, B2 < 0.4, DEFG < 0.4) 
+
+# save groups to df
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'AB1C_exclusive'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
   path_plot
 
@@ -937,8 +954,16 @@ ggsave('exploration/path_proportions/AB1C_exclusive.pdf',
 
   
 # DEFG  exclusive 
-total_prop %>% 
-  filter(AB1C < 0.4, B2 < 0.4, DEFG > 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C < 0.4, B2 < 0.4, DEFG > 0.4) 
+
+# save groups to df
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'DEFG_exclusive'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
   path_plot
 
@@ -949,8 +974,16 @@ ggsave('exploration/path_proportions/DEFG_exclusive.pdf',
 
 
 # ABC and DEFG but not in B2
-total_prop %>% 
-  filter(AB1C > 0.4, B2 < 0.4, DEFG > 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C > 0.4, B2 < 0.4, DEFG > 0.4) 
+
+# save groups to df
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'ABC_DEFG'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
   path_plot
 
@@ -961,10 +994,18 @@ ggsave('exploration/path_proportions/ABC_DEFG_paths.pdf',
 # - - - - - - - - - - - - - - 
 
 #  B2 and ABC, but not in DEFG
-total_prop %>% 
-  filter(AB1C > 0.4, B2 > 0.4, DEFG < 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C > 0.4, B2 > 0.4, DEFG < 0.4) 
+
+# save groups to df
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'B2_ABC'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
-  path_plot 
+  path_plot
 
 ggsave('exploration/path_proportions/ABC_B2_paths.pdf',
        height = 7, width = 8) 
@@ -973,18 +1014,36 @@ ggsave('exploration/path_proportions/ABC_B2_paths.pdf',
 # - - - - - - - - - - - - - - 
 
 # B2 and EDFG but not in ABC
-total_prop %>% 
-  filter(AB1C < 0.4, B2 > 0.4, DEFG > 0.4) %>% 
+temp = total_prop %>% 
+  filter(AB1C < 0.4, B2 > 0.4, DEFG > 0.4) 
+
+# save groups to df
+paths_df = paths_df %>% 
+  bind_rows(temp %>% 
+              distinct(Name) %>% 
+              mutate(group = 'B2_EDFG'))
+
+temp %>%  
   pivot_longer(AB1C:DEFG, names_to = 'big_group', values_to = 'prop') %>% 
-  path_plot 
+  path_plot
 
 ggsave('exploration/path_proportions/B2_DEFG_paths.pdf',
        height = 7, width = 8) 
 
 
+## plot pathways dataframe ####
 
+paths_df %>% 
+  mutate(count = 1) %>% 
+  ggplot(aes(x = group, y = Name, fill = count)) +
+  geom_tile(show.legend = F) +
+  background_grid() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1)
+  )
 
-
+ggsave('exploration/path_proportions/general_heatmap.pdf',
+       width = 8, height = 15)
 
 
 
