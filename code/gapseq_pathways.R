@@ -1042,7 +1042,7 @@ paths_df %>%
     axis.text.x = element_text(angle = 90, hjust = 1)
   )
 
-ggsave('exploration/path_proportions/general_heatmap.pdf',
+ggsave('exploration/path_proportions/pathway_exclusive_heatmap.pdf',
        width = 8, height = 15)
 
 
@@ -1633,6 +1633,22 @@ genome_paths %>%
 
 genome_paths %>%
   filter(str_detect(ReactionsFound, 'RXN-11113')) %>% view
+
+
+
+
+genome_paths %>% 
+  # filter(Completeness == 100) %>% 
+  filter(Name == 'lipid A-core biosynthesis (E. coli K-12)') %>% 
+  left_join(metadata %>% 
+              select(Genome, phylogroup, Strainname, Broadphenotype),
+            by = 'Genome') %>%
+  filter(Broadphenotype == 'Laboratory strain') %>% 
+  view
+
+
+
+
 
 
 
