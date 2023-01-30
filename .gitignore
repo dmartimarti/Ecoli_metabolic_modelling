@@ -48,6 +48,9 @@ vignettes/*.pdf
 /raw_data/met_models
 /raw_data/R_objects
 /raw_data/pathways
+/prot_structures_esm/pdb_files
+/prot_structures_esm/PG_protein_vis
+/prot_structures_esm
 
 
 # MicrobeFDT files and folders
@@ -66,3 +69,4 @@ vignettes/*.pdf
 tables/~$unique_pathways.xlsx
 tables/pathway_PA_metadata.xlsx
 .RDataTmp
+*.fa
