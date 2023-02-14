@@ -247,32 +247,6 @@ proteinfer_pca_ready %>%
 
 
 
-library(tidymodels)
-library(embed)
-
-umap_rec = recipe(~., data = proteinfer_pca_ready) %>%
-  update_role(gene, new_role = "gene") %>%
-  step_normalize(all_predictors()) %>%
-  step_umap(all_predictors())
-
-umap_rec = prep(umap_rec)
-pca_prep
-
-
-pca_fit = proteinfer_pca_ready %>% 
-  select(where(is.numeric)) %>% 
-  prcomp(scale = TRUE) 
-
-pca_fit %>%
-  augment(proteinfer_pca_ready) %>% # add original dataset back in
-  ggplot(aes(.fittedPC1, .fittedPC2, color = annotated)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("#D55E00", "#0072B2")
-  ) +
-  theme_half_open(12) + 
-  background_grid()
-
 # drug related proteins ---------------------------------------------------
 
 

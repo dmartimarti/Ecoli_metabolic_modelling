@@ -23,13 +23,20 @@ prot_df = proteins %>%
 list.files('PG_protein_vis/data', pattern = 'pdb') %>% 
   write('PG_protein_vis/data/prot_list.txt')
 
-prot_id = 23920
-print(glue("Showing protein {proteins[prot_id]}"))
-NGLVieweR(glue('{root}/{proteins[prot_id]}')) %>%
-  stageParameters(backgroundColor = "white") %>% 
-  addRepresentation("cartoon",
-    param = list(name = "cartoon", colorScheme = "bfactor") 
-  )
+plot_protein <- function(prot_id = 123) {
+  prot_id = prot_id
+  print(glue("Showing protein {proteins[prot_id]}"))
+  NGLVieweR(glue('{root}/{proteins[prot_id]}')) %>%
+    stageParameters(backgroundColor = "white") %>% 
+    addRepresentation("cartoon",
+      param = list(name = "cartoon", colorScheme = "bfactor") 
+    )
+}
+
+
+plot_protein(25087)
+
+
 
 mol = read.pdb(glue("{root}/{proteins[prot_id]}"))
 

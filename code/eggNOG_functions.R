@@ -19,6 +19,8 @@ eggnog =  read_delim("tables/eggnog_PG_annotation.tsv",
 eggnog = eggnog %>% 
   rename(Gene = `#query`)
 
+eggnog %>% 
+  write_csv('tables/eggnog_PG_annotation.csv')
 
 # load the full list of genes and PA in our genomes
 gene_PA = read_delim("tables/gene_presence_absence.Rtab", 
