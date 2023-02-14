@@ -26,6 +26,10 @@ proteinfer = read_delim("raw_data/proteinfer/combined_file.tsv",
                             trim_ws = TRUE) %>% 
   rename(gene = sequence_name)
 
+protein_lengths = read_csv("raw_data/proteinfer/protein_lengths.csv") %>% 
+  select(-`...1`) %>% 
+  rename(gene = name)
+
 proteinfer_functions = proteinfer %>% 
   distinct(predicted_label, description)
 
@@ -81,22 +85,15 @@ ggsave(here('exploration', 'proteinfer',
 
 ## GO terms ----- 
 # most annotated GO terms
-
-proteinfer %>% 
+go_prot = proteinfer %>% 
   count(predicted_label) %>% 
   drop_na() %>% 
   filter(str_detect(predicted_label, 'GO:')) %>% 
   arrange(desc(n)) %>% 
-  head(1000) %>% 
-  left_join(proteinfer_functions) %>% view
+  left_join(proteinfer_functions)
 
-proteinfer %>% 
-  count(predicted_label) %>% 
-  drop_na() %>% 
-  filter(str_detect(predicted_label, 'GO:')) %>% 
-  arrange(desc(n)) %>% 
+go_prot%>% 
   head(500) %>% 
-  left_join(proteinfer_functions) %>% 
   mutate(description = ifelse(n > 2886, description, '')) %>% 
   ggplot(aes(x = fct_reorder(predicted_label, n, .desc = T), y = n)) +
   geom_col(fill = 'black') +
@@ -114,13 +111,15 @@ ggsave(here('exploration', 'proteinfer',
 
 ## Pfam -----
 
-proteinfer %>% 
+pfam_prot = proteinfer %>% 
   count(predicted_label) %>% 
   drop_na() %>% 
   filter(str_detect(predicted_label, 'Pfam:')) %>% 
   arrange(desc(n)) %>% 
+  left_join(proteinfer_functions)
+
+pfam_prot %>% 
   head(500) %>% 
-  left_join(proteinfer_functions) %>% 
   mutate(description = ifelse(n > 70, description, '')) %>% 
   ggplot(aes(x = fct_reorder(predicted_label, n, .desc = T), y = n)) +
   geom_col(fill = 'black') +
@@ -136,15 +135,17 @@ ggsave(here('exploration', 'proteinfer',
             'Pfam_terms_histogram.pdf'), height = 6, width = 8)
 
 
-## Pfam -----
+## EC numbers -----
 
-proteinfer %>% 
+ec_prot = proteinfer %>% 
   count(predicted_label) %>% 
   drop_na() %>% 
   filter(str_detect(predicted_label, 'EC:')) %>% 
   arrange(desc(n)) %>% 
+  left_join(proteinfer_functions)
+
+ec_prot %>% 
   head(500) %>% 
-  left_join(proteinfer_functions) %>% 
   unite(labels, predicted_label, description, remove=F, sep = ": ") %>% 
   mutate(labels = ifelse(n > 136, labels, '')) %>% 
   ggplot(aes(x = fct_reorder(predicted_label, n, .desc = T), y = n)) +
@@ -161,5 +162,130 @@ ggsave(here('exploration', 'proteinfer',
             'EC_terms_histogram.pdf'), height = 8, width = 12)
 
 
+
+
+
+proteinfer_full %>% 
+  drop_na(predicted_label) %>%
+  select(gene, predicted_label) %>% 
+  count(gene) %>%
+  ggplot(aes(x = fct_reorder(gene, n), y = n)) + 
+  geom_bar(stat = 'identity', fill = 'black') +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+proteinfer_full %>% 
+  drop_na(predicted_label) %>%
+  select(gene, predicted_label) %>% 
+  count(gene) %>%
+  ggplot(aes(n)) +
+  geom_histogram(bins = 70, fill = 'black') +
+  theme()
+
+
+# correlation  ------------------------------------------------------------
+
+
+
+proteinfer_full %>% 
+  drop_na(predicted_label) %>% 
+  group_by(gene) %>% 
+  count() %>% 
+  left_join(protein_lengths) %>% 
+  ggplot(aes(x = n, y = length)) +
+  geom_point(alpha = 0.1, shape = 21, size = 2 , fill ='darkred') +
+  geom_smooth(method = 'lm') +
+  ggpubr::stat_cor(method = "pearson", label.x = 50, label.y = 6000,
+                   size = 6) +
+  labs(
+    x = 'Number of categories predicted',
+    y = 'Protein length (in aa)'
+  )
+
+
+ggsave(here('exploration', 'proteinfer', 
+            'correlation_cats_length.pdf'), height = 6, width = 8)
+
+
+
+proteinfer_full %>% 
+  drop_na(predicted_label) %>% 
+  group_by(gene) %>% 
+  count() %>% 
+  left_join(protein_lengths) %>% 
+  mutate(groups = case_when(str_detect(gene, 'group') ~ 'group',
+                            TRUE ~ 'gene')) %>% 
+  ggplot(aes(x = n, y = length, color = groups)) +
+  geom_point(alpha = 0.5, size = 2) +
+  geom_smooth(method = 'lm') +
+  ggpubr::stat_cor(method = "pearson", label.x = 50, 
+                   size = 6) +
+  scale_color_manual(values = two_cols) +
+  labs(
+    x = 'Number of categories predicted',
+    y = 'Protein length (in aa)'
+  )
+
+ggsave(here('exploration', 'proteinfer', 
+            'correlation_cats_length_groups.pdf'), height = 6, width = 8)
+
+
+# Multivariate ----------------------------------------------------------------
+
+proteinfer_pca_ready = proteinfer_full %>% 
+  drop_na(predicted_label) %>%
+  select(gene, predicted_label) %>% 
+  mutate(presence = 1) %>% 
+  pivot_wider(names_from = predicted_label, 
+              values_from = presence, 
+              values_fill = 0)
+
+proteinfer_pca_ready %>% 
+  write_csv(here('exploration', 'proteinfer',
+                 'proteinfer_categories_wide.csv'))
+
+
+
+library(tidymodels)
+library(embed)
+
+umap_rec = recipe(~., data = proteinfer_pca_ready) %>%
+  update_role(gene, new_role = "gene") %>%
+  step_normalize(all_predictors()) %>%
+  step_umap(all_predictors())
+
+umap_rec = prep(umap_rec)
+pca_prep
+
+
+pca_fit = proteinfer_pca_ready %>% 
+  select(where(is.numeric)) %>% 
+  prcomp(scale = TRUE) 
+
+pca_fit %>%
+  augment(proteinfer_pca_ready) %>% # add original dataset back in
+  ggplot(aes(.fittedPC1, .fittedPC2, color = annotated)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("#D55E00", "#0072B2")
+  ) +
+  theme_half_open(12) + 
+  background_grid()
+
+# drug related proteins ---------------------------------------------------
+
+
+go_prot %>% 
+  filter(str_detect(description, 'drug'))
+
+
+proteinfer %>% 
+  filter(str_detect(description, 'drug metabolic process')) %>% view
+
+library(FGNet)
+plotGoAncestors(c("GO:0051603", "GO:0019941", "GO:0051128","GO:0044265"),
+                plotOutput="dynamic")
+plotGoAncestors(c("GO:0000152","GO:0043234", "GO:0044446", "GO:0043227"))
 
 
