@@ -23,9 +23,13 @@ prot_df = proteins %>%
 list.files('PG_protein_vis/data', pattern = 'pdb') %>% 
   write('PG_protein_vis/data/prot_list.txt')
 
-plot_protein <- function(prot_id = 123) {
-  prot_id = prot_id
-  print(glue("Showing protein {proteins[prot_id]}"))
+plot_protein <- function(prot_name = 'apaH.pdb') {
+  prot_id = prot_df %>% 
+    filter(protein == prot_name) %>% 
+    head(1) %>% 
+    pull(id)
+  
+  print(glue("Showing protein {prot_name}"))
   NGLVieweR(glue('{root}/{proteins[prot_id]}')) %>%
     stageParameters(backgroundColor = "white") %>% 
     addRepresentation("cartoon",
@@ -34,7 +38,7 @@ plot_protein <- function(prot_id = 123) {
 }
 
 
-plot_protein(25087)
+plot_protein('aam.pdb')
 
 
 
@@ -59,6 +63,9 @@ for (out in list.files('pbs_outputs', pattern = 'esmfold_batch')) {
   pbs_metadata = pbs_metadata %>% 
     bind_rows(temp)
 }
+
+pbs_metadata %>%
+  write_csv('exploration/esm_metadata.csv')
 
 
 # model performance -------------------------------------------------------

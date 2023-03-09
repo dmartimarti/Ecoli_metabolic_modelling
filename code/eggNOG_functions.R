@@ -6,7 +6,10 @@ library(tidymodels)
 library(viridis)
 library(ggpubr)
 
-
+two_cols = c('#EB7D0E', '#0EB7EB')
+three_cols = c('#A428EB', '#EB9D11', '#28EB83')
+four_cols = c('#EB9C1A', '#1081EB', '#EB21C4', '#34C90A')
+five_cols = c('#02C9F7', '#24D402', '#EBB70D', '#D42402', '#8C07F5')
 # read data ---------------------------------------------------------------
 
 
@@ -184,6 +187,43 @@ eggnog_PA %>%
 
 
 ggsave("exploration/eggnog/eggnog_COG_categories.pdf", 
+       height = 8, width = 9)
+
+
+## how many proteins with annotation or not ------
+
+# first calcualte the chi-squared test
+eggnog_PA %>% 
+  separate_rows(COG_category, sep = ',') %>% 
+  mutate(gene_annotation = case_when(str_detect(Gene, 'group_') ~ 'group',
+                                     TRUE ~ 'annotated'),
+         COG_annotation = case_when(
+           COG_category %in% c('S', 'Not annotated') ~ 'Uknown',
+           TRUE ~ 'Known'
+         )) %>% 
+  group_by(gene_annotation, COG_annotation) %>% 
+  count %>% 
+  pivot_wider(names_from = COG_annotation, values_from = n) %>% 
+  ungroup %>% 
+  select(-gene_annotation) %>% chisq.test
+
+# barplot
+eggnog_PA %>% 
+  separate_rows(COG_category, sep = ',') %>% 
+  mutate(gene_annotation = case_when(str_detect(Gene, 'group_') ~ 'group',
+                                     TRUE ~ 'annotated'),
+         COG_annotation = case_when(
+           COG_category %in% c('S', 'Not annotated') ~ 'Uknown',
+           TRUE ~ 'Known'
+         )) %>% 
+  group_by(gene_annotation, COG_annotation) %>% 
+  count %>% 
+  ggplot(aes(y = n, x = gene_annotation, fill = COG_annotation)) +
+  geom_col(color = 'black') +
+  scale_fill_manual(values = two_cols) +
+  annotate('text', x = 1, y = 15000, label = 'Chi-squared \np-value < 2.2e-16')
+
+ggsave("exploration/eggnog/eggnog_COG_annotation_proportion.pdf", 
        height = 8, width = 9)
 
 
@@ -396,6 +436,7 @@ ggsave("exploration/eggnog/phylogroups_genes_cats.pdf",
 
 
 
+
 # correlations between pair of values -------------------------------
 
 
@@ -467,24 +508,170 @@ eggnog_PA %>%
                             TRUE ~ 'not_allele'))
 
 
+# paing COG categories ------------------------------
+
+# the idea is as follows: I want to represent 79 different categories and 
+# those similar should be coloured similarly, the problem is that this is a mess
+# so the idea is:
+#   1. calculate a co-occurrence of COG categories
+#   2. establish an order based on the co-occurrence analysis and divide the 
+#      color wheel equally
+#   3. find the midpoints for the combination of two letters between the two main
+#      colurs
+#   4. do something else with the remnant categories
+
+## co-occurrence of COG categories -----------------------------------------
+library(cooccur)
+library(visNetwork)
+
+single_categories = eggnog %>% 
+  distinct(COG_category) %>% 
+  filter(!(COG_category %in% c('-', 'S'))) %>% 
+  mutate(n = nchar(COG_category)) %>% 
+  filter(n == 1) %>% 
+  arrange(COG_category) %>% 
+  pull(COG_category)
+
+multi_categories = eggnog %>% 
+  distinct(COG_category) %>% 
+  filter(!(COG_category %in% c('-', 'S'))) %>% 
+  mutate(n = nchar(COG_category)) %>% 
+  filter(n > 1) %>% 
+  arrange(COG_category) %>% 
+  pull(COG_category)
+
+cog_matrix = matrix(nrow = length(single_categories),
+       ncol = length(multi_categories),
+       dimnames = list(
+         single_categories,
+         multi_categories
+       ))
+
+
+# fill the matrix with 0s and 1s depending on their presence
+for (m in 1:length(single_categories)){
+  for (n in 1:length(multi_categories)){
+    if (str_detect(multi_categories[n], single_categories[m]) == TRUE) 
+      {cog_matrix[m,n] = 1}
+    else 
+      {cog_matrix[m,n] = 0}
+  }
+} 
+
+co = print(cooccur(cog_matrix, spp_names = TRUE))
+
+cooccur(cog_matrix, spp_names = TRUE, thresh = T)
+
+
+library(RColorBrewer)
+# Define the number of colors you want
+nb.cols <- 79
+mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols)
+
+# DIDN'T WORK AS INTENDED
+
+# create an adjacency matrix
+
+# Extract all unique single letters from the vector
+letters <- unique(unlist(strsplit(multi_categories, "")))
+
+# Create an empty adjacency matrix with the same number of rows and columns as the number of unique letters
+adj_matrix <- matrix(0, nrow = length(letters), ncol = length(letters), dimnames = list(letters, letters))
+
+# Loop over each element in the vector
+for (i in seq_along(multi_categories)) {
+  # Split the current element into single letters
+  current_letters <- strsplit(multi_categories[i], "")[[1]]
+  # Loop over each pair of letters in the current element and update the adjacency matrix accordingly
+  for (j in 1:(length(current_letters)-1)) {
+    for (k in (j+1):length(current_letters)) {
+      adj_matrix[current_letters[j], current_letters[k]] <- 1
+      adj_matrix[current_letters[k], current_letters[j]] <- 1
+    }
+  }
+}
+
+# Print the adjacency matrix
+adj_matrix
+
+
+library(visNetwork)
+
+# Convert the adjacency matrix to an igraph object
+g <- graph.adjacency(adj_matrix, mode = "undirected", weighted = TRUE, diag = FALSE)
+
+# Set the layout of the nodes in the plot
+layout <- layout_with_fr(g)
+
+# Create a data frame of node attributes
+nodes <- data.frame(id = V(g)$name, label = V(g)$name, color = "lightblue")
+
+# Create a data frame of edge attributes
+edges <- data.frame(from = get.edgelist(g)[,1], to = get.edgelist(g)[,2], value = E(g)$weight)
+
+# Plot the network
+visNetwork(nodes, edges) %>% 
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>% 
+  visPhysics(stabilization = TRUE) %>%
+  visLayout(randomSeed = 12345)
+
+
+### network plot =======
+# create graph object
+g <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected")
+
+# calculate edge colors based on shortest path distance
+dist_matrix <- shortest.paths(g)
+max_dist <- max(dist_matrix, na.rm = TRUE)
+edge_colors <- lapply(E(g), function(e) {
+  u <- ends(g, e)[1]
+  v <- ends(g, e)[2]
+  dist <- dist_matrix[u, v]
+  colIndex <- round((dist / max_dist) * (length(multi_categories) - 1) + 1)
+  colIndex <- ifelse(colIndex > length(rainbow(length(multi_categories))), length(rainbow(length(multi_categories))), colIndex)
+  colIndex <- ifelse(colIndex < 1, 1, colIndex)
+  colIndex
+})
+
+# plot network
+set.seed(123) # for reproducibility
+plot(g, vertex.color = rainbow(length(multi_categories)), 
+     edge.color = rainbow(length(multi_categories))[unlist(edge_colors)])
 
 
 
 
 
+### visNetwork plot ----------
+# Create a data frame for edges
+edges_df <- data.frame(from = rownames(adj_matrix), to = colnames(adj_matrix), weight = adj_matrix)
+
+# Create a data frame for nodes
+nodes_df <- data.frame(id = rownames(adj_matrix), label = rownames(adj_matrix))
+
+# Create a color palette
+num_colors <- nrow(adj_matrix)
+color_palette <- rainbow(num_colors, start = 0, end = 1)
+
+# Create a visNetwork object
+network <- visNetwork(nodes_df, edges_df) %>%
+  
+  # Set the color of the nodes and edges
+  visNodes(color = color_palette) %>%
+  # visEdges(color = list(color_palette[match(edges_df$from, rownames(adj_matrix))],
+  #                       width = edges_df$weight)) %>%
+  
+  # Add labels to the nodes
+  # visLabelNoHide() %>%
+  
+  # Set options for the layout and physics of the network
+  visLayout(hierarchical = TRUE, improvedLayout = TRUE) %>%
+  visPhysics(enabled = TRUE, minVelocity = 0.75, stabilization = TRUE)
 
 
 
-
-
-
-
-
-
-
-
-
-
+# Print the network
+print(network)
 
 
 
