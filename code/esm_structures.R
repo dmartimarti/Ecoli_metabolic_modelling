@@ -23,7 +23,8 @@ prot_df = proteins %>%
 list.files('PG_protein_vis/data', pattern = 'pdb') %>% 
   write('PG_protein_vis/data/prot_list.txt')
 
-plot_protein <- function(prot_name = 'apaH.pdb') {
+plot_protein <- function(prot_name = 'apaH') { 
+  prot_name = glue("{prot_name}.pdb")
   prot_id = prot_df %>% 
     filter(protein == prot_name) %>% 
     head(1) %>% 
@@ -38,14 +39,7 @@ plot_protein <- function(prot_name = 'apaH.pdb') {
 }
 
 
-plot_protein('aam.pdb')
-
-
-
-mol = read.pdb(glue("{root}/{proteins[prot_id]}"))
-
-mol$atom %>% as_tibble() %>% 
-  distinct(resid, resno) 
+plot_protein('yiaN_1~~~yiaN_2~~~yiaN_3')
 
 
 

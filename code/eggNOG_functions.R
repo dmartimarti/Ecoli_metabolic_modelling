@@ -315,12 +315,17 @@ eggnog_PA %>%
   count() %>% 
   group_by(group) %>% 
   mutate(prop = n / sum(n)) %>% 
-  ungroup %>% 
+  ungroup %>%
+  mutate(group = factor(group , 
+                        levels = c('core', 'soft_core',
+                                   'shell', 'cloud'))) %>% 
   select(group, COG_category, prop) %>% 
-  ggplot(aes(x=COG_category, y = prop, fill = COG_category)) +
-  geom_boxplot(show.legend = F) +
-  geom_point(aes(fill = group), shape = 21, size = 4, color = 'black',
-             position = position_jitterdodge(dodge.width=0.5))
+  ggplot(aes(x=COG_category, y = prop)) +
+  geom_boxplot(show.legend = F, fill = 'lightblue') +
+  geom_point(aes(fill = group), shape = 21, size = 5, color = 'black',
+             position = position_jitterdodge(dodge.width=0.3)) +
+  scale_fill_manual(values = c("#F20000", "#FA397A", "#7DC9F5", "#64FAC6"))
+
 
 
 ggsave("exploration/eggnog/COG_categories_boxplot_prop.pdf", 

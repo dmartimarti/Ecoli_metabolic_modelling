@@ -24,7 +24,8 @@ dir.create('exploration/proteinfer', showWarnings = F)
 proteinfer = read_delim("raw_data/proteinfer/combined_file_fold2.tsv", 
                             delim = "\t", escape_double = FALSE, 
                             trim_ws = TRUE) %>% 
-  rename(gene = sequence_name)
+  rename(gene = sequence_name) %>% 
+  drop_na(gene)
 
 protein_lengths = read_csv("raw_data/proteinfer/protein_lengths.csv") %>% 
   select(-`...1`) %>% 
@@ -94,6 +95,15 @@ ggsave(here('exploration', 'proteinfer',
 
 # TODO: find a better representation for unnanotated proteins by prokka or 
 # by COGs
+
+# predictions confidence density plot
+proteinfer_full %>% 
+  filter(annotated == 'Yes') %>% 
+  ggplot(aes(confidence)) +
+  geom_density( fill="lightblue")
+
+ggsave(here('exploration', 'proteinfer', 
+            'confidence_density.pdf'), height = 4, width = 5)
 
 
 ## GO terms ----- 
@@ -409,19 +419,20 @@ gene_PA %>%
   select(Gene) %>% 
   mutate(interpro_predict = case_when(Gene %in% interpro_go_genes ~ 'Yes',
                                       TRUE ~ 'No'),
-         annotated = case_when(str_detect(Gene, 'group') ~ 'group',
-                           TRUE ~ 'annotated')) %>%
-  group_by(interpro_predict, annotated) %>% 
+         group = case_when(str_detect(Gene, 'group') ~ 'Group',
+                           TRUE ~ 'Gene name')) %>%
+  group_by(interpro_predict, group) %>% 
   count %>% 
   ungroup %>% 
-  mutate(prop = n/sum(n)) %>% 
-  ggplot(aes(x = interpro_predict, y = prop, fill = annotated)) + 
+  mutate(prop = n/sum(n) * 100) %>% 
+  ggplot(aes(x = interpro_predict, y = prop, fill = group)) + 
   labs(x = 'Predicted by InterPro?',
        y = "%") +
   scale_fill_manual(values = two_cols) +
   geom_col(color = 'black') +
   theme(legend.position = c(0.6, 0.67)) +
-  annotate('text', x = 2, y = 0.6, label = 'Chisq test\n p-value < 2.2e-16')
+  ylim(0, 80) +
+  annotate('text', x = 2, y = 70, label = 'Chisq test\n p-value < 2.2e-16')
 
 ggsave(here('exploration', 'proteinfer', 
             'predicted_group_prop_interpro.pdf'), height = 6, width = 5)

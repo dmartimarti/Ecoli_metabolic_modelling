@@ -150,7 +150,8 @@ rare_prot_func = rare_proteins %>%
               rename(gene = protein))
 
 
-rare_prot_func %>% count(qseqid)
+rare_prot_func %>% count(qseqid, sort = T)
+
 
 rare_prot_func %>% 
   count(qseqid) %>% 
@@ -189,6 +190,8 @@ rare_prot_func %>%
 
 ggsave('../exploration/proteinfer/rare_prot_histogram_no1.pdf',
        height = 5, width = 6)
+
+
 
 ## EC numbers ----------
 
@@ -263,8 +266,8 @@ ggsave('../exploration/proteinfer/rare_prot_GO_filter.pdf',
 
 # chromatine? -------------------------------------------------------------
 
-full_blast %>% 
-  filter()
+proteinfer_full %>% 
+  filter(str_detect(description, 'chromatin'))
 
 
 
