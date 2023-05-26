@@ -39,7 +39,7 @@ plot_protein <- function(prot_name = 'apaH') {
 }
 
 
-plot_protein('yiaN_1~~~yiaN_2~~~yiaN_3')
+plot_protein('mdtB')
 
 
 
