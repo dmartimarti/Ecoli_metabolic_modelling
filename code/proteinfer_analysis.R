@@ -516,6 +516,76 @@ interpro_go %>%
 
 
 
+
+# over-representation  ----------------------------------------------------
+
+
+
+interpro %>% 
+  drop_na(go_terms) %>% 
+  filter(go_terms != '-') %>% 
+  distinct(gene) %>% 
+  count()
+
+
+proteinfer %>% 
+  filter(str_detect(predicted_label, "GO:")) %>% 
+  distinct(gene) %>% 
+  count()
+
+
+# the analysis here would be to see what are the functions that are 
+# over-represented in the set of genes that have known functions
+# (given InterPro as base truth) and what are the functions that are 
+# over-represented in the genes that do not have functional annotation in IP
+
+interpro_genes = interpro %>% 
+  drop_na(go_terms) %>% 
+  filter(go_terms != '-') %>% 
+  distinct(gene) %>% pull(gene)
+
+
+
+# remove some useless categories
+cat_removals = c("molecular_function", "biological_process", 
+                 "cellular_component", "cellular process",
+                 "cell part")
+
+proteinfer %>% 
+  filter(gene %in% interpro_genes) %>% 
+  filter(str_detect(predicted_label, "GO:")) %>% 
+  count(predicted_label, description) %>% 
+  arrange(desc(n)) %>% 
+  filter(!(description %in% cat_removals)) %>% 
+  head(20) %>% 
+  ggplot(aes(x = fct_reorder(description, desc(n)), y = n)) +
+  geom_bar(stat = 'identity') +
+  geom_text_repel(aes(label = description),
+                  nudge_x = 1) +
+  theme(
+    axis.text.x = element_blank()
+  )
+
+
+
+
+
+proteinfer %>% 
+  filter(!(gene %in% interpro_genes)) %>% 
+  filter(str_detect(predicted_label, "GO:")) %>% 
+  count(predicted_label, description) %>% 
+  arrange(desc(n)) %>% 
+  filter(!(description %in% cat_removals)) %>% 
+  head(20) %>% 
+  ggplot(aes(x = fct_reorder(description, desc(n)), y = n)) +
+  geom_bar(stat = 'identity') +
+  geom_text_repel(aes(label = description),
+                  nudge_x = 1) +
+  theme(
+    axis.text.x = element_blank()
+  )
+
+
 # drug related proteins ---------------------------------------------------
 
 
@@ -530,6 +600,11 @@ library(FGNet)
 plotGoAncestors(c("GO:0051603", "GO:0019941", "GO:0051128","GO:0044265"),
                 plotOutput="dynamic")
 plotGoAncestors(c("GO:0000152","GO:0043234", "GO:0044446", "GO:0043227"))
+
+
+
+
+
 
 
 
