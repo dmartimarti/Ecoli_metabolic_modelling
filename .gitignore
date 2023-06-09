@@ -72,3 +72,4 @@ tables/pathway_PA_metadata.xlsx
 *.fa
 *.html
 exploration/proteinfer/proteinfer_categories_wide.csv
+raw_data/met_models.zip
