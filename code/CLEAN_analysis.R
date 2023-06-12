@@ -81,6 +81,16 @@ enzyme_info = read_csv("raw_data/CLEAN/enzyme_information.csv") %>%
 clean_ec = clean_ec %>% 
   left_join(enzyme_info)
 
+clean_ec = clean_ec %>% rename(confidence = distance)
+
+
+### IMPORTANT: ABOUT CONFIDENCE IN CLEAN TOOL
+## https://clean.frontend.mmli1.ncsa.illinois.edu/configuration
+## from running a few instances in their website, it's become clear to me
+## that an acceptable confidence level starts from ~0.25, which leaves us 
+## with only ~3500 genes with medium to high confidence levels. 
+## all the other information must be used carefully 
+
 clean_ec %>% filter(is.na(name))
 
 
@@ -99,12 +109,12 @@ clean_ec %>%
 
 
 clean_ec %>% 
-  ggplot(aes(distance)) +
+  ggplot(aes(confidence)) +
   geom_histogram()
 
    
 clean_ec %>% 
-  filter(distance > 0.05 & distance < 0.4) %>% 
+  filter(distance > 0.25) %>% 
   ggplot(aes(distance)) +
   geom_histogram()
 

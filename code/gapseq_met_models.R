@@ -51,9 +51,9 @@ modelSeed_compounds <- read_delim("tables/modelSeed_compounds.tsv",
 
 
 # get the files names
-files_list = list.files(path = ".", pattern = ".RDS")
+files_list = list.files(path = "raw_data/R_objects/", pattern = ".RDS")
 
-gnm_names = list.files(path = ".", pattern = ".RDS") %>% 
+gnm_names = list.files(path = "raw_data/R_objects/", pattern = ".RDS") %>% 
   str_sub(start = 1, end = -5)
 
 # filter metadata for the bugs we want to analyse: AUS and ECOREF
@@ -70,8 +70,8 @@ meta_filt = metadata %>%
 # read models -------------------------------------------------------------
 
 
-b1 <- readRDS("NT12060_237.RDS") # 
-mg <- readRDS("NT12001_189.RDS") # for MG1655
+b1 <- readRDS("raw_data/R_objects/NT12060_237.RDS") # 
+mg <- readRDS("raw_data/R_objects/NT12001_189.RDS") # for MG1655
 
 getMetaboliteProduction(b1)[1:10]
 getMetaboliteProduction(mg)[1:10]
@@ -85,7 +85,7 @@ b1_met = getMetaboliteProduction(b1)
 
 ### 1. read model ####
 
-b1 <- readRDS("NT12060_237.RDS") 
+b1 <- readRDS("raw_data/R_objects/NT12060_237.RDS") 
 
 ### 2. run the FBA ####
 
@@ -107,7 +107,7 @@ for (model in files_list) {
   
   cat(glue::glue('Reading model {model}\n\n'))
   
-  temp_model = readRDS(model)
+  temp_model = readRDS(paste0("raw_data/R_objects/", model))
   
   optL = optimizeProb(temp_model, 
                       algorithm = 'fba', 
@@ -136,7 +136,7 @@ for (model in files_list) {
   
   cat(glue::glue('Reading model {model}\n\n'))
   
-  temp_model = readRDS(model)
+  temp_model = readRDS(paste0("raw_data/R_objects/", model))
   
   temp_df = tibble('met_name' = temp_model@met_name, 
                    'met_id' = temp_model@met_id, 
@@ -234,7 +234,7 @@ genes_size = foreach(i = 1:length(files_list),
 
           # cat(glue::glue('Reading model {files_list[i]}\n\n'))
 
-           temp_model = readRDS(files_list[i])
+           temp_model = readRDS(paste0("raw_data/R_objects/",files_list[i]))
 
            temp_df = tibble(
              genes = temp_model@genes,
@@ -354,6 +354,8 @@ genome_info = read_delim("~/Documents/MRC_postdoc/Pangenomic/pangenome_analysis/
 
 
 genome_size_comp = genes_size_expand %>% 
+  mutate(Genome = str_sub(Genome, end = -5)) %>% 
+  drop_na() %>% 
   group_by(Genome) %>% 
   summarise(size = sum(abs(diff))) %>% 
   left_join(genome_info) %>% 
@@ -382,6 +384,9 @@ genome_size_comp %>%
         axis.ticks.y=element_blank())
 
 
+genome_size_comp %>% 
+  write_csv('tables/genome_size_metmodels_comparison.csv')
+
 ggsave('../exploration/genome_coverage_genomeSize.pdf',
        height = 4, width = 6)
 
@@ -389,6 +394,7 @@ ggsave('../exploration/genome_coverage_genomeSize.pdf',
 ### percentage lengths ####
 
 genome_size_comp_per = genes_size_expand %>% 
+  mutate(Genome = str_sub(Genome, end = -5)) %>% 
   group_by(Genome) %>% 
   summarise(size = sum(abs(diff))) %>% 
   left_join(genome_info) %>% 
@@ -432,7 +438,8 @@ genome_size_comp_per %>%
 ggsave('../exploration/genome_coverage_genomeSize_percentage.pdf',
        height = 4, width = 6)
 
-
+genome_size_comp_per %>% 
+  write_csv('tables/genome_size_metmodels_per_comparison.csv')
 
 
 
