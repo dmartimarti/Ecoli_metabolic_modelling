@@ -85,7 +85,7 @@ clean_ec = clean_ec %>% rename(confidence = distance)
 
 
 ### IMPORTANT: ABOUT CONFIDENCE IN CLEAN TOOL
-## https://clean.frontend.mmli1.ncsa.illinois.edu/configuration
+## httpgenome_coverage_genomeSize_percentages://clean.frontend.mmli1.ncsa.illinois.edu/configuration
 ## from running a few instances in their website, it's become clear to me
 ## that an acceptable confidence level starts from ~0.25, which leaves us 
 ## with only ~3500 genes with medium to high confidence levels. 
